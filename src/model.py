@@ -73,16 +73,20 @@ def fit(train, val):
         models[name] = m
     return models
 
-
-def predict(models, d):
+def predict(models, d, q=0.0):
     out = d[["city", "date", "target", "pm25_today"]].copy()
     out["pred"] = models["point"].predict(d[FEATURES]).clip(min=0)
     lo = models["lo"].predict(d[FEATURES]).clip(min=0)
     hi = models["hi"].predict(d[FEATURES]).clip(min=0)
-    out["lo"] = np.minimum(lo, out["pred"])
-    out["hi"] = np.maximum(hi, out["pred"])
+    out["lo"] = np.maximum(np.minimum(lo, out["pred"]) - q, 0)
+    out["hi"] = np.maximum(hi, out["pred"]) + q
     return out
 
+def conformal_offset(models, cal, coverage=0.80) -> float:
+    p = predict(models, cal)
+    score = np.maximum(p["lo"] - p["target"], p["target"] - p["hi"])
+    k = int(np.ceil((len(score) + 1) * coverage))
+    return float(np.sort(score.values)[min(k, len(score)) - 1])
 
 def metrics(y, p, lo=None, hi=None) -> dict:
     err = p - y
@@ -102,7 +106,7 @@ def report(pr: pd.DataFrame, name: str) -> dict:
     print("MODEL   :", res["model"])
     print("BASELINE:", res["baseline"])
     groups = {"city": pr["city"], "month": pr["date"].dt.strftime("%Y-%m"),
-              "pollution_level": category(pr["target"]).astype(str)}
+              "pollution_level": category(pr["pm25_today"]).astype(str)}
     for gname, key in groups.items():
         rows = []
         for k, g in pr.groupby(key):
@@ -117,7 +121,6 @@ def report(pr: pd.DataFrame, name: str) -> dict:
         print(f"-> weakest {gname}: {worst[gname]} (gain {worst['gain_%']}%)")
     return res
 
-
 if __name__ == "__main__":
     t0 = time.time()
     d = load_features()
@@ -128,9 +131,12 @@ if __name__ == "__main__":
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
     for k, m in models.items():
         m.booster_.save_model(str(MODEL_DIR / f"{k}.txt"))
-    results = {"validation": report(predict(models, val), "VALIDATION")}
+    q = conformal_offset(models, val)
+    print(f"conformal offset: {q:.2f} ug/m3")
+    results = {"conformal_offset": round(q, 2),
+               "validation": report(predict(models, val, q), "VALIDATION")}
     if "--final" in sys.argv:        # test set: run ONCE, at the very end
-        results["test"] = report(predict(models, test), "TEST (final)")
+        results["test"] = report(predict(models, test, q), "TEST (final)")
     results["train_seconds"] = round(time.time() - t0, 1)
     OUT.write_text(json.dumps(results, indent=2), encoding="utf-8")
     print(f"\ntotal time {results['train_seconds']} s; saved {OUT}")
