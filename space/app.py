@@ -32,7 +32,7 @@ def render():
     try:
         s = load_status()
     except Exception as e:
-        return f"Could not load status: {e}", pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+        return f"Could not load status: {e}", pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
     now = datetime.now(timezone.utc)
 
     ls, lr = s.get("last_success"), s.get("last_run")
@@ -61,8 +61,9 @@ def render():
     runs = pd.DataFrame([{"Run": r["run_id"], "Started (UTC)": r["started_utc"],
                           "Status": r["status"], "New rows": r["new_openaq_rows"]}
                          for r in s.get("recent_runs", [])])
-    return md, pd.DataFrame(fresh), qual, runs
-
+    dq = pd.DataFrame([{"Rule": d["rule_id"], "Action": d["action"], "Rows": d["n_rows"],
+                        "Why": d["reason"]} for d in s.get("quality_decisions", [])])
+    return md, pd.DataFrame(fresh), qual, dq, runs
 
 with gr.Blocks(title="HackInsight: Pakistan Air Quality Pipeline") as demo:
     gr.Markdown("# HackInsight: Pakistan Air Quality Pipeline")
@@ -71,11 +72,13 @@ with gr.Blocks(title="HackInsight: Pakistan Air Quality Pipeline") as demo:
     run_md = gr.Markdown()
     gr.Markdown("### Data freshness")
     fresh_t = gr.Dataframe()
-    gr.Markdown("### Quality status (basic checks; the full Data Quality Agent is added later)")
+    gr.Markdown("### Quality status (Data Quality Agent)")
     qual_t = gr.Dataframe()
+    gr.Markdown("### Data Quality Agent decisions (latest run)")
+    dq_t = gr.Dataframe()
     gr.Markdown("### Recent runs")
     runs_t = gr.Dataframe()
-    outs = [run_md, fresh_t, qual_t, runs_t]
+    outs = [run_md, fresh_t, qual_t, dq_t, runs_t]
     demo.load(render, None, outs)
     btn.click(render, None, outs)
 

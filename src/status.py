@@ -25,6 +25,10 @@ def _conn() -> sqlite3.Connection:
         latest_data_utc TEXT, rows_in_last_fetch INTEGER)""")
     con.execute("""CREATE TABLE IF NOT EXISTS quality_status (
         check_name TEXT PRIMARY KEY, value TEXT, status TEXT, checked_utc TEXT)""")
+    con.execute("""CREATE TABLE IF NOT EXISTS quality_log (
+        log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        run_ts_utc TEXT, rule_id TEXT, table_name TEXT, action TEXT,
+        n_rows INTEGER, reason TEXT, example_row_ids TEXT)""")
     return con
 
 
@@ -62,6 +66,9 @@ def export_status_json() -> None:
         "SELECT * FROM run_status ORDER BY run_id DESC LIMIT 30")]
     ok = con.execute(
         "SELECT * FROM run_status WHERE status='SUCCESS' ORDER BY run_id DESC LIMIT 1").fetchone()
+    last_ts = con.execute("SELECT MAX(run_ts_utc) FROM quality_log").fetchone()[0]
+    decisions = [dict(r) for r in con.execute(
+        "SELECT * FROM quality_log WHERE run_ts_utc = ? ORDER BY log_id", (last_ts,))] if last_ts else []
     data = {
         "generated_utc": _now(),
         "last_run": recent[0] if recent else None,

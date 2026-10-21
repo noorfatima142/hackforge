@@ -1,0 +1,16 @@
+log_id,run_ts_utc,rule_id,table_name,action,n_rows,reason,example_row_ids
+1,2026-10-21T04:27:53+00:00,R01_schema,cleaned_aq,PASS,0,"columns, types and city names match the schema",
+2,2026-10-21T04:27:53+00:00,R02_duplicates,cleaned_aq,FIX,15452,same sensor and hour appeared more than once (hourly refresh re-fetches 72 h); kept the latest copy so late corrections win,"13137731|2026-10-17T19:00Z, 13137731|2026-10-17T20:00Z, 13137731|2026-10-17T21:00Z, 13137731|2026-10-17T22:00Z, 13137731|2026-10-17T23:00Z, 13137731|2026-10-18T00:00Z, 13137731|2026-10-18T01:00Z, 13137731|2026-10-18T02:00Z, 13137731|2026-10-18T03:00Z, 13137731|2026-10-18T04:00Z"
+3,2026-10-21T04:27:53+00:00,R03_units,cleaned_aq,PASS,0,all rows are in ug/m3,
+4,2026-10-21T04:27:53+00:00,R04_negative_pm25,cleaned_aq,PASS,0,no negative PM2.5 values,
+5,2026-10-21T04:27:53+00:00,R05_implausible_high,cleaned_aq,PASS,0,no values above 1000 ug/m3,
+6,2026-10-21T04:27:53+00:00,R06_stuck_sensor,cleaned_aq,FLAG,123,same exact value for 24+ consecutive readings looks like a frozen sensor; excluded from gold,"23455|2024-12-23T05:00Z, 23455|2024-12-23T06:00Z, 23455|2024-12-23T07:00Z, 23455|2024-12-23T08:00Z, 23455|2024-12-23T09:00Z, 23455|2024-12-23T10:00Z, 23455|2024-12-23T11:00Z, 23455|2024-12-23T12:00Z, 23455|2024-12-23T13:00Z, 23455|2024-12-23T14:00Z"
+7,2026-10-21T04:27:53+00:00,R07_short_gaps,cleaned_aq,FILL,6324,gaps of 3 h or less between valid readings filled by linear interpolation and marked is_filled=TRUE (visible downstream),"23455|2024-10-02T07:00Z, 23455|2024-10-03T08:00Z, 23455|2024-10-04T11:00Z, 23455|2024-10-04T12:00Z, 23455|2024-10-05T16:00Z, 23455|2024-10-05T20:00Z, 23455|2024-10-05T21:00Z, 23455|2024-10-06T09:00Z, 23455|2024-10-06T10:00Z, 23455|2024-10-06T12:00Z"
+8,2026-10-21T04:27:53+00:00,R08_long_gaps,cleaned_aq,FLAG,89836,"1998 gaps longer than 3 h left missing: filling them would be guessing, so the uncertainty stays visible",
+9,2026-10-21T04:27:53+00:00,R10_weather_ranges,cleaned_weather,PASS,0,"temperature (C), humidity (%) and wind are in plausible ranges",
+10,2026-10-21T04:27:53+00:00,R09_stale_Lahore,cleaned_aq,PASS,0,newest Lahore reading is 2.5 h old (limit 6 h),
+11,2026-10-21T04:27:53+00:00,R09_stale_Karachi,cleaned_aq,PASS,0,newest Karachi reading is 2.5 h old (limit 6 h),
+12,2026-10-21T04:27:53+00:00,R09_stale_Islamabad,cleaned_aq,PASS,0,newest Islamabad reading is 2.5 h old (limit 6 h),
+13,2026-10-21T04:27:53+00:00,R09_stale_Peshawar,cleaned_aq,PASS,0,newest Peshawar reading is 2.5 h old (limit 6 h),
+14,2026-10-21T04:27:53+00:00,R09_stale_weather,cleaned_weather,PASS,0,newest weather value is 0.5 h old (limit 3 h),
+15,2026-10-21T04:27:53+00:00,R11_exclusion_share,cleaned_aq,PASS,123,0.05% of rows excluded (limit 30%),

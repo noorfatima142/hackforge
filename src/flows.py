@@ -27,10 +27,7 @@ def basic_checks(db_path) -> list[dict]:
 
     total = con.execute("SELECT COUNT(*) FROM gold_city_hour").fetchone()[0]
     add("Gold rows (need 50,000+)", total, total >= 50000)
-    neg = con.execute("SELECT COUNT(*) FROM cleaned_aq WHERE pm25_negative_flag").fetchone()[0]
-    add("Negative PM2.5 readings set to missing", neg, True)
-    huge = con.execute("SELECT COUNT(*) FROM cleaned_aq WHERE pm25 > 1000").fetchone()[0]
-    add("Implausible readings (> 1000 ug/m3) present", huge, huge == 0)
+    
     n = con.execute("""SELECT COUNT(DISTINCT city) FROM gold_city_hour
                        WHERE ts_utc >= now() - INTERVAL 6 HOUR""").fetchone()[0]
     add("Cities with data in last 6 hours (of 4)", n, n == 4)
