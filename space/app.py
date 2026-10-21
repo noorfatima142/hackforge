@@ -26,7 +26,7 @@ STATUS_URL = (
 )
 
 LOCAL_FILE = os.path.join(BASE_DIR, "data", "status.json")
-CHROMA_PATH = os.path.join(BASE_DIR, "data", "chroma")
+CHROMA_PATH = os.path.join(BASE_DIR,"data", "chroma")
 
 GROQ_MODEL = "openai/gpt-oss-20b"
 CHROMA_COLLECTION = "hackforge_knowledge"
